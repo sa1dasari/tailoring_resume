@@ -5,9 +5,10 @@ Setup:
     1. Install dependencies:  python -m pip install -r requirements.txt
     2. Put your resume in inputs/resume.docx (or switch RESUME_PATH to a .docx file).
     3. Put the target JD in inputs/job_description.txt.
-    4. Store API key in a local .env file (not committed):
+    4. Edit rules in rules/resume_rules.txt.
+    5. Store API key in a local .env file (not committed):
        ANTHROPIC_API_KEY=sk-ant-...
-    5. Run: python tailor_resume.py
+    6. Run: python tailor_resume.py
 
 Usage notes:
     - Input files are read from inputs/ by default.
@@ -42,6 +43,7 @@ RESUME_PATH    = INPUT_DIR / "Sawan_Dasari_Resume.docx"
 JOB_DESC_PATH  = INPUT_DIR / "job_description.txt"
 OUTPUT_DIR     = BASE_DIR / "output"              # Generated files are saved here
 DOTENV_PATH    = BASE_DIR / ".env"
+RULES_PATH     = BASE_DIR / "rules" / "resume_rules.txt"
 MODEL          = "claude-sonnet-4-5"   # or "claude-opus-4-5" for the most capable
 LINKEDIN_URL   = "https://www.linkedin.com/in/sawan-dasari/"
 # ─────────────────────────────────────────────────────────────────────────────
@@ -98,69 +100,25 @@ def load_inputs() -> tuple[str, str]:
 
 # ─── API CALL ────────────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are a professional resume tailoring assistant. Tailor the provided resume to the job description using only existing content from the resume — never fabricate skills, roles, achievements, or numbers.
+def load_system_prompt(path: Path) -> str:
+    """Load system prompt/rules from an external text file."""
+    if not path.exists():
+        sys.exit(f"Rules file not found: {path}")
 
-Output in this EXACT format (the markers and section order are mandatory):
-
-COMPANY_NAME: <company name from the job description>
-
----RESUME_START---
-<Full Name>
-<email> | <phone> | <location> | LinkedIn | <other contact info if present>
-
-SUMMARY
-<2-3 sentence summary tailored to the role. Position-focused, not a keyword dump.>
-
-EXPERIENCE
-<Job Title> | <Company>, <Location> | <Start Month Year> – <End Month Year or Present>
-- <accomplishment bullet starting with a strong verb>
-- <accomplishment bullet>
-- <accomplishment bullet>
-
-<Job Title> | <Company>, <Location> | <Start> – <End>
-- <bullet>
-- <bullet>
-
-SKILLS
-<Category>: <skill1>, <skill2>, <skill3>
-<Category>: <skill1>, <skill2>
-
-EDUCATION
-<Degree> | <School>, <Location> | <Year>
-Relevant Coursework: <course1>, <course2>, <course3>
-<Sub-role Title — Subject> | <Dates>
-- <bullet describing the sub-role>
-- <bullet>
----RESUME_END---
-
-CRITICAL FORMATTING RULES:
-1. Every bullet MUST start with "- " (hyphen + space). No exceptions. No other bullet characters.
-2. Every job header MUST follow the "Title | Company, Location | Dates" format with " | " (space-pipe-space) separators.
-3. Every skills line MUST follow "Category: skill1, skill2, ..." format with a colon after the category.
-4. Section headers (SUMMARY, EXPERIENCE, SKILLS, EDUCATION) MUST be on their own line, all caps, no other formatting.
-5. Section order is fixed: SUMMARY → EXPERIENCE → SKILLS → EDUCATION.
-6. In EDUCATION: degree line first, then optional "Relevant Coursework: ..." line, then optional sub-roles (e.g., Teaching Assistant) formatted like "Sub-role — Subject | Dates" followed by bullets.
-
-CONTENT RULES:
-1. ATS-friendly: plain text, no markdown bold/italic markers in the output.
-2. Accomplishments over duties: lead with action verb, include impact, quantify where the original resume already has numbers.
-3. NEVER invent or estimate numbers. Only use numbers that appear in the original resume. If a bullet has no number, leave it qualitative.
-4. Only include skills relevant to this job. Omit basics (e.g., Microsoft Word, Git basics).
-5. Bold category labels in the SKILLS section by their position only — do not add markdown.
-6. PAGE BUDGET: target exactly 1 page for candidates with <10 years experience. Approximate budget per single-spaced page at ~10pt: 4-5 bullets per recent role, 3-4 per older role, 2-3 sentences per summary, 4-6 skill categories. If including optional Education sub-content (coursework, TA roles), trim 1-2 bullets from older Experience entries to keep total to 1 page. Never go over 1 page just to fit everything; cut the lowest-impact bullets first.
-7. Omit GPA unless candidate has <2 years experience.
-8. Never add anything not present in the original resume.
-9. EDUCATION enrichment: If the original resume contains relevant coursework, teaching assistant roles, research roles, academic awards, or thesis work, include them under EDUCATION when (a) they are relevant to the target role OR (b) the candidate has fewer than 5 years of professional experience. Prioritize content that demonstrates skills the JD asks for. Do not include high school information. Limit "Relevant Coursework" to 4 courses maximum, prioritizing those most aligned with the JD."""
+    prompt = path.read_text(encoding="utf-8").strip()
+    if not prompt:
+        sys.exit(f"Rules file is empty: {path}")
+    return prompt
 
 
-def call_claude(resume_text: str, jd_text: str, api_key: str) -> tuple[str, dict]:
+def call_claude(resume_text: str, jd_text: str, api_key: str, system_prompt: str) -> tuple[str, dict]:
     client = anthropic.Anthropic(api_key=api_key)
 
     print(f"Calling {MODEL}...")
     response = client.messages.create(
         model=MODEL,
         max_tokens=4096,
-        system=SYSTEM_PROMPT,
+        system=system_prompt,
         messages=[{
             "role": "user",
             "content": f"RESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{jd_text}"
@@ -702,8 +660,10 @@ def main():
             "ANTHROPIC_API_KEY=sk-ant-..."
         )
 
+    system_prompt = load_system_prompt(RULES_PATH)
+
     try:
-        output, usage = call_claude(resume_text, jd_text, api_key)
+        output, usage = call_claude(resume_text, jd_text, api_key, system_prompt)
     except anthropic.APIError as e:
         sys.exit(f"API call failed: {e}")
 

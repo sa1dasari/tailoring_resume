@@ -1,13 +1,26 @@
 # Tailoring Resume
 
-## Files you will edit
-- `inputs/Sawan_Dasari_Resume.docx`: place your resume DOCX file here (or update `RESUME_PATH` in `tailor_resume.py`).
-- `inputs/job_description.txt`: paste the target job description.
+This project tailors your resume to a target job description using Anthropic Claude.
+It reads your resume and JD, generates an ATS-friendly tailored version, and saves both:
+- a tailored resume (`.docx`)
+- a change summary (`.docx`) showing what was kept/modified/removed
+
+## What it does
+- Uses your existing resume content only (no fabricated experience/metrics)
+- Reorders and refines content for the target role
+- Writes polished output files to `output/`
+- Creates a local comparison summary between original and tailored resume
+
+## Input files
+- `inputs/Sawan_Dasari_Resume.docx`: your source resume
+- `inputs/job_description.txt`: the target job description text
+- `rules/resume_rules.txt`: tailoring rules and output format used by the script
+
+If your resume file name is different, update `RESUME_PATH` in `tailor_resume.py`.
 
 ## API key (safe local storage)
-1. Create `.env` in the project root 
-
-2. Put your real Anthropic key in `.env`:
+1. Create `.env` in the project root.
+2. Put your Anthropic key in `.env`:
    `ANTHROPIC_API_KEY=sk-ant-...`
 
 `.env` is ignored by git via `.gitignore`.
@@ -22,5 +35,8 @@ python -m pip install -r requirements.txt
 python tailor_resume.py
 ```
 
-Generated files are saved to `output/`.
+## Output files
+Generated files are saved to `output/`, typically:
+- `tailored_resume_<Company>.docx`
+- `changes_summary_<Company>.docx`
 
