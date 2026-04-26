@@ -1,0 +1,51 @@
+Software Engineer II - Fulfillment
+New York, New York, United States
+StubHub is on a mission to redefine the live event experience on a global scale. Whether someone is looking to attend their first event or their hundredth, we’re here to delight them all the way from the moment they start looking for a ticket until they step through the gate. The same goes for our sellers. From fans selling a single ticket to the promoters of a worldwide stadium tour, we want StubHub to be the safest, most convenient way to offer a ticket to the millions of fans who browse our platform around the world.
+
+The Fulfillment team ensures that every ticket delivered is valid. We own the post-purchase flow; including barcode integrations, mobile wallets, partner APIs, inventory reconciliation, observability, and incident response, with a mission of zero fulfillment breakage and a seamless experience for fans and sellers. 
+
+As an Software Engineer II, you’ll build end-to-end post-purchase flows, partner integrations that directly drive reliability improvements and measurable business impact at massive scale. 
+
+Location: Hybrid (3 days in office/2 days remote) – New York, NY or Century City, CA 
+ 
+What You'll Do:
+Design, implement, and operate backend services and integrations powering the post-purchase fulfillment pipeline (barcode validation, mobile wallets, partner APIs, & inventory reconciliation). 
+Build 0-to-1 fault-tolerant systems and async pipelines (queues/streaming) that scale for peak event traffic and ensure idempotent, reliable delivery. 
+Own features end-to-end: from requirements and architecture to implementation, testing, deployment, monitoring, and runbooks. 
+Collaborate cross-functionally with Product, Data, and QA, as well as two Operations partners: 
+Active Support: enhances the post-purchase customer experience and builds tools for fans and support agents. 
+Marketplace Operations: drives inventory quality and supply across events. 
+Instrument services with robust observability: metrics, logs, distributed traces, and alerting to proactively detect and reduce fulfillment breakage. 
+Why You'll Love This Team:
+
+Fast-Paced, Ambiguous Engineering Culture: Thrive in an environment that encourages bold experimentation, rapid iteration, and innovative problem-solving. 
+Exposure to AI-Driven Experiences: Work on real-world products that integrate AI-powered functionality, shaping the way fans interact with our platform. 
+Meaningful Product Impact: Build the technological backbone of our marketplace, delivering reliable, scalable systems that power millions of ticket transactions and directly reduce post-purchase failures. 
+Collaborative Engineering Environment: Join a team of talented engineers who value thoughtful execution, shared ownership, and celebrating wins together. 
+Continuous Feedback and Growth: Enjoy a culture centered on regular, constructive feedback to refine your technical skills, deepen your product judgment, and grow as an engineer. 
+What You've Done:
+
+3-4 years building production software with a focus on backend and distributed systems. 
+Proficient in Java, Python, or Golang, with experience building and consuming APIs. 
+Built scalable, reliable systems for real-time ticketing, barcode validation, and post-purchase workflows. 
+Designed async pipelines and streaming systems (Kafka or similar) to handle peak traffic with zero breakage. 
+Integrated third-party APIs, with bonuses for experience in venue systems, barcode providers, or mobile wallets. 
+Operated cloud services (AWS, GCP, Azure), delivering features that improve reliability and power seamless experiences at scale. 
+What We Offer:
+
+Accelerated Growth Environment: An environment designed for swift skill and knowledge enhancement, where you have the autonomy to lead experiments and tests on a massive scale.
+Top Tier Compensation Package: Competitive base, equity, and upside that tracks with your impact.
+Flexible Time Off: Enjoy unlimited Flex Time Off, giving you the flexibility to manage your schedule and take time to recharge as needed.
+Comprehensive Benefits Package: Prioritize your well-being with a comprehensive benefits package, featuring 401k, and premium Health, Vision, and Dental Insurance options.
+The anticipated gross base pay range is below for this role. Actual compensation will vary depending on factors such as a candidate’s qualifications, skills, experience, and competencies. Base annual salary is one component of StubHub’s total compensation and competitive benefits package, which includes equity, 401(k), paid time off, paid parental leave, and comprehensive health benefits. 
+
+Salary Range
+
+$165,000 - $200,000 USD
+
+About Us 
+StubHub is the world’s leading marketplace to buy and sell tickets to any live event, anywhere. Through StubHub in North America and viagogo, our international platform, we service customers in 195 countries in 33 languages and 49 available currencies. With more than 300 million tickets available annually on our platform to events around the world -- from sports to music, comedy to dance, festivals to theater -- StubHub offers the safest, most convenient way to buy or sell tickets to the most memorable live experiences. Come join our team for a front-row seat to the action. 
+ 
+For California Residents: California Job Applicant Privacy Notice found here
+ 
+We are an equal opportunity employer and value diversity on our team. We do not discriminate on the basis of race, color, religion, sex, national origin, gender, sexual orientation, age, disability, veteran status, or any other legally protected status.
