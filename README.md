@@ -1,11 +1,12 @@
 # Tailoring Resume
 
 ## Files you will edit
-- `inputs/resume.txt`: paste your resume text.
+- `inputs/Sawan_Dasari_Resume.docx`: place your resume DOCX file here (or update `RESUME_PATH` in `tailor_resume.py`).
 - `inputs/job_description.txt`: paste the target job description.
 
 ## API key (safe local storage)
-1. Copy `.env.example` to `.env`.
+1. Create `.env` in the project root 
+
 2. Put your real Anthropic key in `.env`:
    `ANTHROPIC_API_KEY=sk-ant-...`
 
