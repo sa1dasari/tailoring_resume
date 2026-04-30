@@ -46,6 +46,15 @@ DOTENV_PATH    = BASE_DIR / ".env"
 RULES_PATH     = BASE_DIR / "rules" / "resume_rules.txt"
 MODEL          = "claude-sonnet-4-5"   # or "claude-opus-4-5" for the most capable
 LINKEDIN_URL   = "https://www.linkedin.com/in/sawan-dasari/"
+
+# Common technologies/tools used for lightweight JD gap detection.
+TECH_TERMS = [
+    "python", "typescript", "javascript", "java", "go", "c++", "c#", "sql", "nosql",
+    "fastapi", "django", "flask", "node.js", "node", "react", "postgres", "mysql", "mongodb",
+    "redis", "kafka", "airflow", "docker", "kubernetes", "aws", "gcp", "azure", "terraform",
+    "ci/cd", "rest", "graphql", "api", "sdk", "observability", "data pipeline", "integrations",
+    "schema", "data modeling", "strong typing", "typing", "libraries", "tooling",
+]
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -111,17 +120,51 @@ def load_system_prompt(path: Path) -> str:
     return prompt
 
 
-def call_claude(resume_text: str, jd_text: str, api_key: str, system_prompt: str) -> tuple[str, dict]:
+def _contains_term(text: str, term: str) -> bool:
+    txt = text.lower()
+    t = term.lower().strip()
+    if not t:
+        return False
+    if re.search(r"[+#./-]", t) or " " in t:
+        return t in txt
+    return re.search(rf"\b{re.escape(t)}\b", txt) is not None
+
+
+def extract_missing_jd_terms(resume_text: str, jd_text: str) -> list[str]:
+    """Find likely required JD technologies/tools that are absent from the original resume text."""
+    in_jd = [term for term in TECH_TERMS if _contains_term(jd_text, term)]
+    missing = [term for term in in_jd if not _contains_term(resume_text, term)]
+    # Keep deterministic, short guidance to avoid over-constraining the model.
+    return sorted(set(missing))[:12]
+
+
+def call_claude(
+    resume_text: str,
+    jd_text: str,
+    api_key: str,
+    system_prompt: str,
+    missing_jd_terms: list[str] | None = None,
+) -> tuple[str, dict]:
     client = anthropic.Anthropic(api_key=api_key)
 
     print(f"Calling {MODEL}...")
+    skill_guidance = ""
+    if missing_jd_terms:
+        skill_guidance = (
+            "\n\nMISSING_JD_TERMS_POSSIBLY_RELEVANT:\n"
+            f"{', '.join(missing_jd_terms)}\n"
+            "If any term above can be truthfully inferred from the candidate's existing experience context, "
+            "you may weave it into EXPERIENCE bullets. If not, omit it. "
+            "Never add unsupported claims, metrics, projects, or responsibilities."
+        )
+
     response = client.messages.create(
         model=MODEL,
         max_tokens=4096,
         system=system_prompt,
         messages=[{
             "role": "user",
-            "content": f"RESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{jd_text}"
+            "content": f"RESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{jd_text}{skill_guidance}"
         }],
     )
 
@@ -540,6 +583,12 @@ def compare_resumes(original_text: str, tailored_parsed: dict, jd_text: str, com
     skills_removed = orig_skills - tail_skills
     skills_added   = tail_skills - orig_skills
 
+    missing_terms = extract_missing_jd_terms(original_text, jd_text)
+    tail_experience_text = "\n".join(tailored_parsed["sections"].get("EXPERIENCE", [])).lower()
+    contextually_added_terms = [
+        term for term in missing_terms if _contains_term(tail_experience_text, term)
+    ]
+
     orig_edu = [l.strip() for l in original_parsed["sections"].get("EDUCATION", []) if l.strip()]
     tail_edu = [l.strip() for l in tailored_parsed["sections"].get("EDUCATION", []) if l.strip()]
     edu_added = [l for l in tail_edu if not any(_similarity(l, o) > 0.7 for o in orig_edu)]
@@ -578,8 +627,11 @@ def compare_resumes(original_text: str, tailored_parsed: dict, jd_text: str, com
     out += ["", "─" * 60, "SKILLS REMOVED", "─" * 60]
     out.append("  " + (", ".join(sorted(skills_removed)) if skills_removed else "None"))
 
-    out += ["", "─" * 60, "SKILLS ADDED  (should be empty)", "─" * 60]
+    out += ["", "─" * 60, "SKILLS ADDED", "─" * 60]
     out.append("  " + (", ".join(sorted(skills_added)) if skills_added else "None"))
+
+    out += ["", "─" * 60, "JD TERMS ADDED IN EXPERIENCE (context check)", "─" * 60]
+    out.append("  " + (", ".join(contextually_added_terms) if contextually_added_terms else "None"))
 
     out += ["", "─" * 60, "EDUCATION — CONTENT ADDED", "─" * 60]
     if edu_added:
@@ -663,7 +715,16 @@ def main():
     system_prompt = load_system_prompt(RULES_PATH)
 
     try:
-        output, usage = call_claude(resume_text, jd_text, api_key, system_prompt)
+        missing_jd_terms = extract_missing_jd_terms(resume_text, jd_text)
+        if missing_jd_terms:
+            print("Possible JD skill/tool gaps detected:", ", ".join(missing_jd_terms))
+        output, usage = call_claude(
+            resume_text,
+            jd_text,
+            api_key,
+            system_prompt,
+            missing_jd_terms=missing_jd_terms,
+        )
     except anthropic.APIError as e:
         sys.exit(f"API call failed: {e}")
 

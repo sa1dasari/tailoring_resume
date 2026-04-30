@@ -8,6 +8,7 @@ It reads your resume and JD, generates an ATS-friendly tailored version, and sav
 ## What it does
 - Uses your existing resume content only (no fabricated experience/metrics)
 - Reorders and refines content for the target role
+- Detects likely required JD tools/technologies missing from the resume and asks the model to add them only when they fit existing experience context
 - Writes polished output files to `output/`
 - Creates a local comparison summary between original and tailored resume
 
