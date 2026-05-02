@@ -12,7 +12,7 @@ Setup:
 
 Usage notes:
     - Input files are read from inputs/ by default.
-    - Output is written to output/tailored_resume_<Company>.docx
+    - Output is written to output/tailored_resume_<Company>.docx and output/tailored_cv_<Company>.docx
 """
 
 import os
@@ -179,6 +179,18 @@ def call_claude(
 # ─── PARSING ─────────────────────────────────────────────────────────────────
 
 SECTION_HEADERS = {"SUMMARY", "EXPERIENCE", "SKILLS", "EDUCATION"}
+CV_SECTION_HEADERS = {
+    "CONTACT INFORMATION",
+    "PROFESSIONAL SUMMARY / PROFILE",
+    "CORE COMPETENCIES / TECHNICAL SKILLS",
+    "PROFESSIONAL EXPERIENCE",
+    "PROJECTS",
+    "PUBLICATIONS / RESEARCH",
+    "EDUCATION",
+    "CERTIFICATIONS & TRAINING",
+    "AWARDS & HONORS",
+    "PROFESSIONAL AFFILIATIONS",
+}
 BULLET_PREFIXES = ("- ", "• ", "* ", "– ", "— ")
 
 
@@ -193,15 +205,20 @@ def extract_company(text: str) -> str:
     return "Company"
 
 
-def extract_resume_body(text: str) -> str:
-    start_marker = "---RESUME_START---"
-    end_marker = "---RESUME_END---"
+def extract_marked_body(text: str, start_marker: str, end_marker: str, label: str) -> str:
     if start_marker in text and end_marker in text:
         start = text.index(start_marker) + len(start_marker)
         end = text.index(end_marker)
         return text[start:end].strip()
-    print("WARNING: resume markers not found in model output. Using full output.")
-    return text.strip()
+    sys.exit(f"Required {label} markers not found in model output: {start_marker} ... {end_marker}")
+
+
+def extract_resume_body(text: str) -> str:
+    return extract_marked_body(text, "---RESUME_START---", "---RESUME_END---", "resume")
+
+
+def extract_cv_body(text: str) -> str:
+    return extract_marked_body(text, "---CV_START---", "---CV_END---", "cv")
 
 
 def is_bullet(line: str) -> bool:
@@ -250,6 +267,12 @@ def parse_resume(body: str) -> dict:
         parsed["sections"][current_header] = current_lines
 
     return parsed
+
+
+def validate_required_sections(parsed: dict, required: set[str], label: str) -> None:
+    missing = [section for section in required if section not in parsed["sections"]]
+    if missing:
+        sys.exit(f"{label} is missing required sections: {', '.join(sorted(missing))}")
 
 
 # ─── DOCX WRITING ────────────────────────────────────────────────────────────
@@ -495,6 +518,67 @@ def write_docx(parsed: dict, output_path: str, linkedin_url: str | None = None):
     doc.save(output_path)
 
 
+def write_cv_docx(parsed: dict, output_path: str, linkedin_url: str | None = None):
+    doc = Document()
+
+    for section in doc.sections:
+        section.top_margin = Pt(36)
+        section.bottom_margin = Pt(36)
+        section.left_margin = Pt(54)
+        section.right_margin = Pt(54)
+
+    style = doc.styles["Normal"]
+    style.font.name = "Calibri"
+    style.font.size = Pt(10)
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(parsed["name"].upper())
+    run.bold = True
+    run.font.size = Pt(16)
+    p.paragraph_format.space_after = Pt(2)
+
+    write_contact_line(doc, parsed["contact"], linkedin_url)
+
+    section_order = [
+        "CONTACT INFORMATION",
+        "PROFESSIONAL SUMMARY / PROFILE",
+        "CORE COMPETENCIES / TECHNICAL SKILLS",
+        "PROFESSIONAL EXPERIENCE",
+        "PROJECTS",
+        "PUBLICATIONS / RESEARCH",
+        "EDUCATION",
+        "CERTIFICATIONS & TRAINING",
+        "AWARDS & HONORS",
+        "PROFESSIONAL AFFILIATIONS",
+    ]
+    sections = parsed["sections"]
+
+    for header in section_order:
+        if header not in sections:
+            continue
+        write_section_header(doc, header)
+        body_lines = sections[header]
+
+        for raw in body_lines:
+            line = raw.strip()
+            if not line:
+                continue
+
+            if is_bullet(line):
+                write_bullet(doc, strip_bullet(line))
+            elif "EXPERIENCE" in header and " | " in line:
+                write_job_header(doc, line)
+            elif "SKILLS" in header and ":" in line:
+                write_skills_line(doc, line)
+            elif header == "EDUCATION" and line.count("|") >= 2:
+                write_education_line(doc, line)
+            else:
+                write_plain(doc, line)
+
+    doc.save(output_path)
+
+
 
 # ─── LOCAL DIFF SUMMARY (no second API call) ─────────────────────────────────
 
@@ -734,9 +818,14 @@ def main():
     print(f"Company: {company}")
 
     body = extract_resume_body(output)
+    cv_body = extract_cv_body(output)
     parsed = parse_resume(body)
+    parsed_cv = parse_resume(cv_body)
 
-    if not parsed["sections"]:
+    validate_required_sections(parsed, SECTION_HEADERS, "Resume")
+    validate_required_sections(parsed_cv, {"PROFESSIONAL EXPERIENCE", "EDUCATION"}, "CV")
+
+    if not parsed["sections"] or not parsed_cv["sections"]:
         debug_path = os.path.join(OUTPUT_DIR, f"raw_output_{datetime.now():%Y%m%d_%H%M%S}.txt")
         with open(debug_path, "w", encoding="utf-8") as f:
             f.write(output)
@@ -761,6 +850,14 @@ def main():
         linkedin_url=LINKEDIN_URL,
     )
     print(f"\n✓ Resume:  {resume_path} ({os.path.getsize(resume_path)/1024:.1f} KB)")
+
+    cv_path = safe_write(
+        write_cv_docx,
+        os.path.join(OUTPUT_DIR, f"tailored_cv_{company}.docx"),
+        parsed_cv,
+        linkedin_url=LINKEDIN_URL,
+    )
+    print(f"✓ CV:      {cv_path} ({os.path.getsize(cv_path)/1024:.1f} KB)")
 
     # Local diff — no second API call
     print("Comparing resumes...")

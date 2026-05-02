@@ -1,15 +1,17 @@
 # Tailoring Resume
 
 This project tailors your resume to a target job description using Anthropic Claude.
-It reads your resume and JD, generates an ATS-friendly tailored version, and saves both:
+It reads your resume and JD, generates ATS-friendly tailored documents, and saves:
 - a tailored resume (`.docx`)
-- a change summary (`.docx`) showing what was kept/modified/removed
+- a tailored CV (`.docx`)
+- a change summary (`.docx`) showing what was kept/modified/removed from the resume
 
 ## What it does
 - Uses your existing resume content only (no fabricated experience/metrics)
 - Reorders and refines content for the target role
 - Detects likely required JD tools/technologies missing from the resume and asks the model to add them only when they fit existing experience context
 - Writes polished output files to `output/`
+- Produces both short-form resume and full-length CV outputs from one run
 - Creates a local comparison summary between original and tailored resume
 
 ## Input files
@@ -39,5 +41,6 @@ python tailor_resume.py
 ## Output files
 Generated files are saved to `output/`, typically:
 - `tailored_resume_<Company>.docx`
+- `tailored_cv_<Company>.docx`
 - `changes_summary_<Company>.docx`
 
