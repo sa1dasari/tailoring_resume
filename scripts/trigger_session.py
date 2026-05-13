@@ -6,10 +6,13 @@ Environment variables:
 - MANAGED_AGENT_ID (required unless SESSION_PAYLOAD_JSON is provided)
 - MANAGED_AGENTS_BASE_URL (optional, default: https://api.anthropic.com)
 - SESSION_CREATE_PATH (optional, default: /v1/sessions)
+- SESSION_ENVIRONMENT_ID (optional, added as environment_id when provided)
 - VAULT_IDS (optional, comma-separated vault IDs for retrieval context)
 - SESSION_INPUT (optional)
 - SESSION_INPUT_FILE (optional, path to a UTF-8 text file)
 - SESSION_PAYLOAD_JSON (optional, full JSON payload override)
+- ANTHROPIC_VERSION (optional, default: 2023-06-01)
+- ANTHROPIC_BETA (optional, default: managed-agents-2026-04-01)
 - SESSION_MAX_RETRIES (optional, default: 3)
 - SESSION_TIMEOUT_SECONDS (optional, default: 60)
 """
@@ -59,10 +62,10 @@ def build_payload() -> dict[str, Any]:
     input_text = _load_input_text()
 
     payload: dict[str, object] = {
-        "agent_id": agent_id,
-        "input": input_text,
+        "agent": agent_id,
         "metadata": {
             "trigger": "github_actions",
+            "session_input": input_text,
             "repository": os.environ.get("GITHUB_REPOSITORY", ""),
             "workflow": os.environ.get("GITHUB_WORKFLOW", ""),
             "run_id": os.environ.get("GITHUB_RUN_ID", ""),
@@ -70,6 +73,10 @@ def build_payload() -> dict[str, Any]:
             "sha": os.environ.get("GITHUB_SHA", ""),
         },
     }
+
+    environment_id = os.environ.get("SESSION_ENVIRONMENT_ID", "").strip()
+    if environment_id:
+        payload["environment_id"] = environment_id
 
     vault_ids_raw = os.environ.get("VAULT_IDS", "").strip()
     if vault_ids_raw:
@@ -102,8 +109,13 @@ def main() -> int:
         url = f"{base_url}{path}"
         payload = build_payload()
 
+        anthropic_version = os.environ.get("ANTHROPIC_VERSION", "2023-06-01").strip() or "2023-06-01"
+        anthropic_beta = os.environ.get("ANTHROPIC_BETA", "managed-agents-2026-04-01").strip() or "managed-agents-2026-04-01"
+
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "x-api-key": api_key,
+            "anthropic-version": anthropic_version,
+            "anthropic-beta": anthropic_beta,
             "Content-Type": "application/json",
             "Accept": "application/json",
         }

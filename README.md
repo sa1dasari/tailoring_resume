@@ -60,6 +60,11 @@ Configure these in your repo settings:
 - `SESSION_INPUT` (optional default input text)
 - `SESSION_PAYLOAD_JSON` (optional full JSON payload override)
 
+Optional variables:
+- `SESSION_ENVIRONMENT_ID` (adds `environment_id` to the session payload)
+- `ANTHROPIC_VERSION` (default: `2023-06-01`)
+- `ANTHROPIC_BETA` (default: `managed-agents-2026-04-01`)
+
 ### Manual trigger
 You can run the workflow manually from GitHub Actions (`workflow_dispatch`) and optionally provide a one-off `session_input`.
 
