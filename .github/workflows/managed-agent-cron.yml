@@ -26,15 +26,18 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install dependencies
+        run: python -m pip install python-dotenv
+
       - name: Trigger managed agent session
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MANAGED_AGENT_ID: ${{ secrets.MANAGED_AGENT_ID }}
           MANAGED_AGENTS_BASE_URL: ${{ secrets.MANAGED_AGENTS_BASE_URL }}
+          SESSION_ENVIRONMENT_ID: ${{ secrets.SESSION_ENVIRONMENT_ID }}
           ANTHROPIC_VERSION: 2023-06-01
           ANTHROPIC_BETA: managed-agents-2026-04-01
           VAULT_IDS: ${{ secrets.VAULT_IDS }}
           SESSION_INPUT: ${{ github.event.inputs.session_input || secrets.SESSION_INPUT }}
           SESSION_PAYLOAD_JSON: ${{ secrets.SESSION_PAYLOAD_JSON }}
         run: python scripts/trigger_session.py
-
