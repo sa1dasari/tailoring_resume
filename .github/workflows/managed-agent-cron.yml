@@ -27,7 +27,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: python -m pip install python-dotenv
+        run: python -m pip install python-dotenv anthropic
 
       - name: Trigger managed agent session
         env:
@@ -40,4 +40,4 @@ jobs:
           VAULT_IDS: ${{ secrets.VAULT_IDS }}
           SESSION_INPUT: ${{ github.event.inputs.session_input || secrets.SESSION_INPUT }}
           SESSION_PAYLOAD_JSON: ${{ secrets.SESSION_PAYLOAD_JSON }}
-        run: python scripts/trigger_session.py
+        run: python agent/trigger_session.py

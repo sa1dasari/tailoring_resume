@@ -157,16 +157,13 @@ def main() -> int:
                     print(f"\n→ Sending initial message: {input_text[:100]}...")
 
                     # Send user.message event to start the session
+                    # Using dict format as SDK types may not be directly accessible
                     client.beta.sessions.events.send(
                         session_id=session_id,
-                        events=[
-                            anthropic.types.BetaManagedAgentsUserMessageEventParam(
-                                type="user.message",
-                                content=[
-                                    anthropic.types.TextBlockParam(type="text", text=input_text)
-                                ]
-                            )
-                        ]
+                        events=[{
+                            "type": "user.message",
+                            "content": [{"type": "text", "text": input_text}]
+                        }]
                     )
 
                     print("✓ Initial message sent. Streaming session events...\n")
