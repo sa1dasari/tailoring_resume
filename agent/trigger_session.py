@@ -5,21 +5,6 @@ This script:
 1. Creates a new managed agent session
 2. Sends an initial user.message event to start the workflow
 3. Streams session events until completion or idle status
-
-Environment variables:
-- ANTHROPIC_API_KEY (required)
-- MANAGED_AGENT_ID (required unless SESSION_PAYLOAD_JSON is provided)
-- MANAGED_AGENTS_BASE_URL (optional, default: https://api.anthropic.com)
-- SESSION_CREATE_PATH (optional, default: /v1/sessions)
-- SESSION_ENVIRONMENT_ID (optional, added as environment_id when provided)
-- VAULT_IDS (optional, comma-separated vault IDs for retrieval context)
-- SESSION_INPUT (optional)
-- SESSION_INPUT_FILE (optional, path to a UTF-8 text file)
-- SESSION_PAYLOAD_JSON (optional, full JSON payload override)
-- ANTHROPIC_VERSION (optional, default: 2023-06-01)
-- ANTHROPIC_BETA (optional, default: managed-agents-2026-04-01)
-- SESSION_MAX_RETRIES (optional, default: 3)
-- SESSION_TIMEOUT_SECONDS (optional, default: 60)
 """
 
 from __future__ import annotations
@@ -147,14 +132,14 @@ def main() -> int:
                         print("ERROR: No session ID in response", file=sys.stderr)
                         return 1
 
-                    print(f"\n✓ Session created: {session_id}")
+                    print(f"\n[SUCCESS] Session created: {session_id}")
 
                     # Initialize Anthropic client to send messages and stream events
                     client = anthropic.Anthropic(api_key=api_key)
 
                     # Get the input text to send as first message
                     input_text = _load_input_text()
-                    print(f"\n→ Sending initial message: {input_text[:100]}...")
+                    print(f"\n[INFO] Sending initial message: {input_text[:100]}...")
 
                     # Send user.message event to start the session
                     # Using dict format as SDK types may not be directly accessible
@@ -166,7 +151,7 @@ def main() -> int:
                         }]
                     )
 
-                    print("✓ Initial message sent. Streaming session events...\n")
+                    print("[SUCCESS] Initial message sent. Streaming session events...\n")
 
                     # Stream events to monitor progress
                     event_count = 0
@@ -181,16 +166,16 @@ def main() -> int:
 
                         # Check for completion or errors
                         if event_type == "session.status_idle":
-                            print("\n✓ Session completed and is now idle.")
+                            print("\n[SUCCESS] Session completed and is now idle.")
                             break
                         elif event_type == "error":
                             error_msg = getattr(event, 'message', 'Unknown error')
-                            print(f"\n✗ Error occurred: {error_msg}", file=sys.stderr)
+                            print(f"\n[ERROR] Error occurred: {error_msg}", file=sys.stderr)
                             return 1
 
                         # Safety: break after many events to avoid infinite loops
                         if event_count > 10000:
-                            print("\n⚠ Event limit reached, stopping stream.", file=sys.stderr)
+                            print("\n[WARNING] Event limit reached, stopping stream.", file=sys.stderr)
                             break
 
                     print(f"\nTotal events processed: {event_count}")
