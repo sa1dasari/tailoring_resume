@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Trigger a Managed Agent session via POST /v1/sessions.
+"""Trigger a Managed Agent session via POST /v1/sessions, send initial message, and stream events.
+
+This script:
+1. Creates a new managed agent session
+2. Sends an initial user.message event to start the workflow
+3. Streams session events until completion or idle status
 
 Environment variables:
 - ANTHROPIC_API_KEY (required)
@@ -28,6 +33,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any, cast
 
+import anthropic
+from dotenv import load_dotenv
 
 def _get_required(name: str) -> str:
     value = os.environ.get(name, "").strip()
@@ -96,6 +103,9 @@ def _post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeo
 
 
 def main() -> int:
+    # Load environment variables from .env file if present
+    load_dotenv()
+
     try:
         api_key = _get_required("ANTHROPIC_API_KEY")
         base_url = os.environ.get("MANAGED_AGENTS_BASE_URL", "https://api.anthropic.com").rstrip("/")
@@ -108,6 +118,9 @@ def main() -> int:
 
         url = f"{base_url}{path}"
         payload = build_payload()
+
+        print(f"[DEBUG] Request URL: {url}")
+        print(f"[DEBUG] Payload: {json.dumps(payload, indent=2)}")
 
         anthropic_version = os.environ.get("ANTHROPIC_VERSION", "2023-06-01").strip() or "2023-06-01"
         anthropic_beta = os.environ.get("ANTHROPIC_BETA", "managed-agents-2026-04-01").strip() or "managed-agents-2026-04-01"
@@ -125,7 +138,71 @@ def main() -> int:
                 status, body = _post_json(url=url, headers=headers, payload=payload, timeout=timeout)
                 print(f"Session create request succeeded (status={status}).")
                 print(body)
-                return 0
+
+                # Parse session ID from response
+                try:
+                    response_data = json.loads(body)
+                    session_id = response_data.get("id")
+                    if not session_id:
+                        print("ERROR: No session ID in response", file=sys.stderr)
+                        return 1
+
+                    print(f"\n✓ Session created: {session_id}")
+
+                    # Initialize Anthropic client to send messages and stream events
+                    client = anthropic.Anthropic(api_key=api_key)
+
+                    # Get the input text to send as first message
+                    input_text = _load_input_text()
+                    print(f"\n→ Sending initial message: {input_text[:100]}...")
+
+                    # Send user.message event to start the session
+                    # Using dict format as SDK types may not be directly accessible
+                    client.beta.sessions.events.send(
+                        session_id=session_id,
+                        events=[{
+                            "type": "user.message",
+                            "content": [{"type": "text", "text": input_text}]
+                        }]
+                    )
+
+                    print("✓ Initial message sent. Streaming session events...\n")
+
+                    # Stream events to monitor progress
+                    event_count = 0
+                    for event in client.beta.sessions.events.stream(session_id=session_id):
+                        event_count += 1
+                        event_id = getattr(event, 'id', '')
+                        event_type = event.type
+
+                        # Print important events
+                        if event_type in ["session.status_active", "session.status_idle", "message.created", "message.completed"]:
+                            print(f"[{event_count}] {event_type}: {event_id}")
+
+                        # Check for completion or errors
+                        if event_type == "session.status_idle":
+                            print("\n✓ Session completed and is now idle.")
+                            break
+                        elif event_type == "error":
+                            error_msg = getattr(event, 'message', 'Unknown error')
+                            print(f"\n✗ Error occurred: {error_msg}", file=sys.stderr)
+                            return 1
+
+                        # Safety: break after many events to avoid infinite loops
+                        if event_count > 10000:
+                            print("\n⚠ Event limit reached, stopping stream.", file=sys.stderr)
+                            break
+
+                    print(f"\nTotal events processed: {event_count}")
+                    return 0
+
+                except json.JSONDecodeError as exc:
+                    print(f"ERROR: Failed to parse session response: {exc}", file=sys.stderr)
+                    return 1
+                except anthropic.APIError as exc:
+                    print(f"ERROR: Failed to send message or stream events: {exc}", file=sys.stderr)
+                    return 1
+
             except urllib.error.HTTPError as exc:
                 body = exc.read().decode("utf-8", errors="replace")
                 retryable = exc.code >= 500 or exc.code == 429

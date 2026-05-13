@@ -1,0 +1,55 @@
+About Manulife and John Hancock
+Description
+This role is an exciting opportunity for someone in their career to gain hands-on experience while contributing to work that supports our broader mission. As part of the team, you’ll learn how real-world projects come together, build foundational skills, and collaborate with experienced professionals who are invested in your growth. You’ll have the chance to explore modern tools, take on meaningful responsibilities, and see the impact of your work firsthand. This role is designed to help you grow from learning the basics to confidently owning work that moves the organization forward—all while building a strong career foundation.
+
+Office locations: Boston - USA or Toronto - Canada
+
+Work arrangement: Hybrid only (3 days in office, 2 days from Home); Remote working option is not available.
+
+Position Responsibilities
+Own and deliver key outcomes aligned to team and organizational priorities.
+
+Collaborate with cross-functional partners to plan, execute, and improve solutions.
+
+Apply best practices to ensure quality, security, reliability, and scalability of work.
+
+Analyze data, trends, and feedback to inform decisions and drive improvements.
+
+Contribute to process optimization, documentation, and knowledge sharing.
+
+More specific responsibilities (if needed)
+
+Support the reliability and day‑to‑day operation of critical enterprise systems by troubleshooting issues, resolving incidents, and coordinating with engineering and support teams to minimize business impact.
+
+Monitor and manage scheduled system processes and data workflows, investigating failures or delays and taking corrective action to ensure timely and accurate execution.
+
+Design, develop, and maintain enterprise software components and workflows that meet standards for reliability, scalability, compliance, and long‑term support.
+
+Analyze recurring system problems, identify root causes, and implement lasting improvements to enhance system stability, performance, and operational efficiency.
+
+Build and support system integrations and APIs, improve monitoring and performance visibility, collaborate with platform and DevOps teams, and provide technical guidance to peers
+
+Required Qualifications
+
+2+ years of relevant professional experience in a related role or function.
+
+2+ years of hands-on experience with Java/Python/Node.js, and SQL
+
+Experience working in Azure DevOps, GitHub Actions, Jenkins.
+
+Familiarity with Java/Python/Node.js, and SQL
+
+Bachelor’s degree in Computer Science, Engineering, or a related field
+
+Strong communication skills with both technical and non-technical audiences.
+
+Preferred Qualifications
+Demonstrated commitment to continuous improvement and learning.
+
+When you join our team:
+
+We’ll empower you to learn and grow the career you want.
+
+We’ll recognize and support you in a flexible environment where well-being and inclusion are more than just words.
+
+As part of our global team, we’ll support you in shaping the future you want to see.

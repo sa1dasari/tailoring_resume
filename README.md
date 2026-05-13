@@ -1,75 +1,79 @@
-# Tailoring Resume
+# Resume Tailoring & Job Search Automation
 
-This project tailors your resume to a target job description using Anthropic Claude.
-It reads your resume and JD, generates ATS-friendly tailored documents, and saves:
-- a tailored resume (`.docx`)
-- a tailored CV (`.docx`)
-- a change summary (`.docx`) showing what was kept/modified/removed from the resume
+Automated and manual resume tailoring using Anthropic Claude.
 
-## What it does
-- Uses your existing resume content only (no fabricated experience/metrics)
-- Reorders and refines content for the target role
-- Detects likely required JD tools/technologies missing from the resume and asks the model to add them only when they fit existing experience context
-- Writes polished output files to `output/`
-- Produces both short-form resume and full-length CV outputs from one run
-- Creates a local comparison summary between original and tailored resume
+## Project Structure
 
-## Input files
-- `inputs/Sawan_Dasari_Resume.docx`: your source resume
-- `inputs/job_description.txt`: the target job description text
-- `rules/resume_rules.txt`: tailoring rules and output format used by the script
-
-If your resume file name is different, update `RESUME_PATH` in `tailor_resume.py`.
-
-## API key (safe local storage)
-1. Create `.env` in the project root.
-2. Put your Anthropic key in `.env`:
-   `ANTHROPIC_API_KEY=sk-ant-...`
-
-`.env` is ignored by git via `.gitignore`.
-
-## Install
-```powershell
-python -m pip install -r requirements.txt
+```
+tailoring_resume/
+├── local/                 # Manual resume tailoring
+│   ├── tailor_resume.py   # Local tailoring script
+│   ├── inputs/            # Job descriptions & resume
+│   ├── output/            # Generated resumes
+│   └── rules/             # Formatting rules
+│
+├── agent/                 # Managed agent automation
+│   ├── trigger_session.py # Session trigger script
+│   └── system_prompt.txt  # Agent instructions
+│
+├── docs/                  # Documentation
+│   ├── AGENT_SETUP.md     # Complete setup guide
+│   └── ...                # Additional docs
+│
+├── .github/workflows/     # GitHub Actions
+│   └── managed-agent-cron.yml
+│
+├── .env                   # API keys (git-ignored)
+└── requirements.txt       # Python dependencies
 ```
 
-## Run
+## Two Workflows
+
+### 1. Local Manual Tailoring
+
+Tailor a single resume to a specific job description.
+
 ```powershell
-python tailor_resume.py
+# Edit inputs
+notepad local/inputs/job_description.txt
+
+# Run tailoring
+python local/tailor_resume.py
+
+# Review output
+# local/output/tailored_resume_<Company>.docx
+# local/output/changes_summary_<Company>.docx
 ```
 
-## Output files
-Generated files are saved to `output/`, typically:
-- `tailored_resume_<Company>.docx`
-- `tailored_cv_<Company>.docx`
-- `changes_summary_<Company>.docx`
+See [`local/README.md`](local/README.md) for details.
 
-## External schedule trigger (Managed Agents)
-If you want this to run automatically at **8 AM and 5 PM EST on Wed/Fri/Sat/Sun**, this repo now includes:
-- Workflow: `.github/workflows/managed-agent-cron.yml`
-- Trigger script: `scripts/trigger_session.py`
+### 2. Agent Automation
 
-The workflow runs on cron (`0 13,22 * * 0,3,5,6` UTC, standard time mapping) and calls `POST /v1/sessions`.
+Automated LinkedIn job search + resume tailoring + email digest.
 
-### GitHub repository secrets
-Configure these in your repo settings:
-- `ANTHROPIC_API_KEY` (required)
-- `MANAGED_AGENT_ID` (required unless `SESSION_PAYLOAD_JSON` is set)
-- `MANAGED_AGENTS_BASE_URL` (optional; defaults to `https://api.anthropic.com`)
-- `VAULT_IDS` (optional; comma-separated, e.g. `vlt_abc123,vlt_def456`)
-- `SESSION_INPUT` (optional default input text)
-- `SESSION_PAYLOAD_JSON` (optional full JSON payload override)
+**Runs automatically** on Wed/Fri/Sat/Sun at 8 AM & 5 PM ET via GitHub Actions.
 
-Optional variables:
-- `SESSION_ENVIRONMENT_ID` (adds `environment_id` to the session payload)
-- `ANTHROPIC_VERSION` (default: `2023-06-01`)
-- `ANTHROPIC_BETA` (default: `managed-agents-2026-04-01`)
-
-### Manual trigger
-You can run the workflow manually from GitHub Actions (`workflow_dispatch`) and optionally provide a one-off `session_input`.
-
-### Local dry run of the trigger client
+**Or trigger manually**:
 ```powershell
-python scripts/trigger_session.py
+python agent/trigger_session.py
 ```
+
+**What it does**:
+1. Searches LinkedIn for recent Software Engineer jobs (< 24 hours old)
+2. Tailors resume for each position
+3. Drafts application essay answers
+4. Sends consolidated email digest with all resumes
+
+See [`agent/README.md`](agent/README.md) for details.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[docs/AGENT_SETUP.md](docs/AGENT_SETUP.md)** | Complete agent configuration guide |
+| **[agent/README.md](agent/README.md)** | Agent automation details |
+| **[local/README.md](local/README.md)** | Manual tailoring guide |
+| **[docs/README.md](docs/README.md)** | Documentation index |
 

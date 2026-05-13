@@ -17,8 +17,8 @@ SUMMARY
 
 EXPERIENCE
 <Job Title> | <Company>, <Location> | <Start Month Year> - <End Month Year or Present>
-- <For [context] I did [task] that led to [impact].>
-- <For [context] I did [task] that led to [impact].>
+- <Action verb> <object/system/feature> to <achieve impact/result>
+- <Action verb> <object/system/feature> resulting in <quantified benefit>
 
 SKILLS
 <Category>: <skill1>, <skill2>, <skill3>
@@ -47,9 +47,9 @@ CORE COMPETENCIES / TECHNICAL SKILLS
 
 PROFESSIONAL EXPERIENCE
 <Job Title> | <Company>, <Location> | <Start Month Year> - <End Month Year or Present>
-- <For [context] I did [task] that led to [impact].>
-- <For [context] I did [task] that led to [impact].>
-- <For [context] I did [task] that led to [impact].>
+- <Action verb> <object/system/feature> to <achieve impact/result>
+- <Action verb> <object/system/feature> resulting in <quantified benefit>
+- <Action verb> <object/system/feature> leading to <measurable outcome>
 
 PROJECTS
 <include only if present in source>
@@ -82,4 +82,5 @@ STRICT RULES:
 9) Omit GPA unless candidate appears entry-level (<2 years experience).
 10) Include only role-relevant skills; prioritize JD technologies and required competencies.
 11) CV should be comprehensive and expanded, but still ATS-friendly and truthful.
+12) BULLET POINT STYLE: Start every bullet with a strong action verb (Developed, Implemented, Built, Designed, Led, Optimized, Architected, etc.). NEVER use first-person pronouns (I, my, we). NEVER use "For...I" constructions. Write in past tense for previous roles, present tense for current roles.
 
