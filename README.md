@@ -45,19 +45,25 @@ Generated files are saved to `output/`, typically:
 - `changes_summary_<Company>.docx`
 
 ## External schedule trigger (Managed Agents)
-If you want this to run automatically at **6 AM and 1 PM EST**, this repo now includes:
+If you want this to run automatically at **8 AM and 5 PM EST on Wed/Fri/Sat/Sun**, this repo now includes:
 - Workflow: `.github/workflows/managed-agent-cron.yml`
 - Trigger script: `scripts/trigger_session.py`
 
-The workflow runs on cron (`0 11,18 * * *` UTC) and calls `POST /v1/sessions`.
+The workflow runs on cron (`0 13,22 * * 0,3,5,6` UTC, standard time mapping) and calls `POST /v1/sessions`.
 
 ### GitHub repository secrets
 Configure these in your repo settings:
-- `MANAGED_AGENTS_API_KEY` (required)
+- `ANTHROPIC_API_KEY` (required)
 - `MANAGED_AGENT_ID` (required unless `SESSION_PAYLOAD_JSON` is set)
-- `MANAGED_AGENTS_BASE_URL` (optional; defaults to `https://api.openai.com`)
+- `MANAGED_AGENTS_BASE_URL` (optional; defaults to `https://api.anthropic.com`)
+- `VAULT_IDS` (optional; comma-separated, e.g. `vlt_abc123,vlt_def456`)
 - `SESSION_INPUT` (optional default input text)
 - `SESSION_PAYLOAD_JSON` (optional full JSON payload override)
+
+Optional variables:
+- `SESSION_ENVIRONMENT_ID` (adds `environment_id` to the session payload)
+- `ANTHROPIC_VERSION` (default: `2023-06-01`)
+- `ANTHROPIC_BETA` (default: `managed-agents-2026-04-01`)
 
 ### Manual trigger
 You can run the workflow manually from GitHub Actions (`workflow_dispatch`) and optionally provide a one-off `session_input`.
