@@ -12,7 +12,7 @@ Setup:
 
 Usage notes:
     - Input files are read from inputs/ by default.
-    - Output is written to output/tailored_resume_<Company>.docx and output/tailored_cv_<Company>.docx
+    - Output is written to output/tailored_resume_<Company>.docx
 """
 
 import os
@@ -818,14 +818,11 @@ def main():
     print(f"Company: {company}")
 
     body = extract_resume_body(output)
-    cv_body = extract_cv_body(output)
     parsed = parse_resume(body)
-    parsed_cv = parse_resume(cv_body)
 
     validate_required_sections(parsed, SECTION_HEADERS, "Resume")
-    validate_required_sections(parsed_cv, {"PROFESSIONAL EXPERIENCE", "EDUCATION"}, "CV")
 
-    if not parsed["sections"] or not parsed_cv["sections"]:
+    if not parsed["sections"]:
         debug_path = os.path.join(OUTPUT_DIR, f"raw_output_{datetime.now():%Y%m%d_%H%M%S}.txt")
         with open(debug_path, "w", encoding="utf-8") as f:
             f.write(output)
@@ -851,13 +848,6 @@ def main():
     )
     print(f"\n✓ Resume:  {resume_path} ({os.path.getsize(resume_path)/1024:.1f} KB)")
 
-    cv_path = safe_write(
-        write_cv_docx,
-        os.path.join(OUTPUT_DIR, f"tailored_cv_{company}.docx"),
-        parsed_cv,
-        linkedin_url=LINKEDIN_URL,
-    )
-    print(f"✓ CV:      {cv_path} ({os.path.getsize(cv_path)/1024:.1f} KB)")
 
     # Local diff — no second API call
     print("Comparing resumes...")
