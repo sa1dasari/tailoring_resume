@@ -15,6 +15,7 @@ Usage notes:
     - Output is written to output/tailored_resume_<Company>.docx
 """
 
+import argparse
 import os
 import re
 import sys
@@ -88,15 +89,26 @@ def load_resume_text(path: Path) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def load_inputs() -> tuple[str, str]:
-    if not RESUME_PATH.exists():
-        sys.exit(f"Resume not found: {RESUME_PATH}")
+def load_inputs(resume_path: Path | None = None) -> tuple[str, str]:
+    """Load resume and job description texts.
+
+    Args:
+        resume_path: Optional custom path to resume file. If None, uses default RESUME_PATH.
+
+    Returns:
+        Tuple of (resume_text, job_description_text)
+    """
+    if resume_path is None:
+        resume_path = RESUME_PATH
+
+    if not resume_path.exists():
+        sys.exit(f"Resume not found: {resume_path}")
     if not JOB_DESC_PATH.exists():
         sys.exit(f"Job description not found: {JOB_DESC_PATH}")
 
-    resume_text = load_resume_text(RESUME_PATH)
+    resume_text = load_resume_text(resume_path)
     if not resume_text:
-        sys.exit(f"Resume file is empty: {RESUME_PATH}")
+        sys.exit(f"Resume file is empty: {resume_path}")
 
     with open(JOB_DESC_PATH, "r", encoding="utf-8") as f:
         jd_text = f.read().strip()
@@ -144,7 +156,21 @@ def call_claude(
     api_key: str,
     system_prompt: str,
     missing_jd_terms: list[str] | None = None,
+    custom_prompt: str | None = None,
 ) -> tuple[str, dict]:
+    """Call Claude API to tailor resume.
+
+    Args:
+        resume_text: The source resume content
+        jd_text: The job description content
+        api_key: Anthropic API key
+        system_prompt: System prompt/rules
+        missing_jd_terms: Optional list of missing JD terms to highlight
+        custom_prompt: Optional custom instructions to append to the request
+
+    Returns:
+        Tuple of (response_text, usage_dict)
+    """
     client = anthropic.Anthropic(api_key=api_key)
 
     print(f"Calling {MODEL}...")
@@ -158,13 +184,20 @@ def call_claude(
             "Never add unsupported claims, metrics, projects, or responsibilities."
         )
 
+    # Build the user message content
+    content = f"RESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{jd_text}{skill_guidance}"
+
+    # Add custom prompt if provided
+    if custom_prompt:
+        content += f"\n\nADDITIONAL INSTRUCTIONS:\n{custom_prompt}"
+
     response = client.messages.create(
         model=MODEL,
         max_tokens=4096,
         system=system_prompt,
         messages=[{
             "role": "user",
-            "content": f"RESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{jd_text}{skill_guidance}"
+            "content": content
         }],
     )
 
@@ -778,14 +811,94 @@ def write_summary_docx(summary_text: str, output_path: str, company: str):
 
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 
+def parse_arguments():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Tailor a resume to a job description using Claude AI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Use default resume (Sawan_Dasari_Resume.docx)
+  python tailor_resume.py
+  
+  # Use a different resume file
+  python tailor_resume.py --resume inputs/Alternative_Resume.docx
+  
+  # Add custom instructions
+  python tailor_resume.py --prompt "Emphasize leadership experience"
+  
+  # Combine both options
+  python tailor_resume.py --resume inputs/Senior_Resume.docx --prompt "Focus on cloud architecture"
+        """
+    )
+
+    parser.add_argument(
+        "--resume", "-r",
+        type=str,
+        help="Path to resume file (default: inputs/Sawan_Dasari_Resume.docx). Supports .docx files."
+    )
+
+    parser.add_argument(
+        "--prompt", "-p",
+        type=str,
+        help="Additional custom instructions to guide the tailoring (e.g., 'Emphasize leadership skills')"
+    )
+
+    parser.add_argument(
+        "--list-resumes", "-l",
+        action="store_true",
+        help="List available resume files in the inputs directory"
+    )
+
+    return parser.parse_args()
+
+
+def list_available_resumes():
+    """List all resume files in the inputs directory."""
+    print("\nAvailable resume files in inputs/:")
+    print("-" * 50)
+
+    resume_files = list(INPUT_DIR.glob("*.docx"))
+    if not resume_files:
+        print("No .docx files found in inputs/")
+        return
+
+    for idx, file in enumerate(resume_files, 1):
+        size_kb = file.stat().st_size / 1024
+        print(f"{idx}. {file.name} ({size_kb:.1f} KB)")
+
+    print("-" * 50)
+
+
 def main():
+    args = parse_arguments()
+
+    # Handle --list-resumes flag
+    if args.list_resumes:
+        list_available_resumes()
+        sys.exit(0)
     INPUT_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Load optional local secrets file (kept out of git).
     load_dotenv_file(DOTENV_PATH)
 
-    resume_text, jd_text = load_inputs()
+    # Determine resume path
+    resume_path = None
+    if args.resume:
+        resume_path = Path(args.resume)
+        if not resume_path.is_absolute():
+            resume_path = BASE_DIR / resume_path
+        print(f"Using custom resume: {resume_path.name}")
+    else:
+        resume_path = RESUME_PATH
+        print(f"Using default resume: {resume_path.name}")
+
+    # Display custom prompt if provided
+    if args.prompt:
+        print(f"Custom instructions: {args.prompt}")
+
+    resume_text, jd_text = load_inputs(resume_path)
     print(f"Resume: {len(resume_text)} chars | JD: {len(jd_text)} chars")
 
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip().strip('"').strip("'")
@@ -808,6 +921,7 @@ def main():
             api_key,
             system_prompt,
             missing_jd_terms=missing_jd_terms,
+            custom_prompt=args.prompt,
         )
     except anthropic.APIError as e:
         sys.exit(f"API call failed: {e}")
@@ -836,7 +950,7 @@ def main():
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             base, ext = os.path.splitext(preferred)
             fallback = f"{base}_{ts}{ext}"
-            print(f"\n⚠  {os.path.basename(preferred)} is open in Word — saving to {os.path.basename(fallback)}")
+            print(f"\n[WARNING] {os.path.basename(preferred)} is open in Word - saving to {os.path.basename(fallback)}")
             fn(*args, output_path=fallback, **kwargs)
             return fallback
 
@@ -846,7 +960,7 @@ def main():
         parsed,
         linkedin_url=LINKEDIN_URL,
     )
-    print(f"\n✓ Resume:  {resume_path} ({os.path.getsize(resume_path)/1024:.1f} KB)")
+    print(f"\n[SUCCESS] Resume: {resume_path} ({os.path.getsize(resume_path)/1024:.1f} KB)")
 
 
     # Local diff — no second API call
@@ -863,7 +977,7 @@ def main():
         summary_text,
         company=company,
     )
-    print(f"\n✓ Summary: {summary_path} ({os.path.getsize(summary_path)/1024:.1f} KB)")
+    print(f"\n[SUCCESS] Summary: {summary_path} ({os.path.getsize(summary_path)/1024:.1f} KB)")
 
 
 if __name__ == "__main__":

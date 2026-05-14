@@ -16,25 +16,45 @@ This directory contains the local script for manually tailoring a single resume 
 
 ## Usage
 
-### 1. Prepare Input Files
-
-Edit the input files:
+### Basic Usage
 
 ```powershell
-# Edit job description
-notepad local/inputs/job_description.txt
-
-# Edit or replace resume if needed
-# local/inputs/Sawan_Dasari_Resume.docx
-```
-
-### 2. Run the Script
-
-```powershell
+# Use default resume and job description
 python local/tailor_resume.py
 ```
 
-### 3. Review Output
+### Choose a Different Resume
+
+```powershell
+# List available resume files
+python local/tailor_resume.py --list-resumes
+
+# Use a specific resume file
+python local/tailor_resume.py --resume inputs/Alternative_Resume.docx
+```
+
+#### 3. View All Options
+
+```powershell
+# Show help and examples
+python local/tailor_resume.py --help
+```
+
+### Command-Line Arguments
+
+| Argument | Short | Description | Example |
+|----------|-------|-------------|---------|
+| `--resume` | `-r` | Path to resume file | `--resume inputs/My_Resume.docx` |
+| `--prompt` | `-p` | Custom tailoring instructions | `--prompt "Emphasize Python skills"` |
+| `--list-resumes` | `-l` | List available resume files | `--list-resumes` |
+| `--help` | `-h` | Show help message | `--help` |
+
+### Input Files
+
+Before running, prepare:
+
+1. **Job Description** - Edit `local/inputs/job_description.txt`
+### Output Files
 
 Generated files appear in `local/output/`:
 - Tailored resume (DOCX)
